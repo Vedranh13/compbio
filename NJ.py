@@ -1,14 +1,21 @@
 
 # coding: utf-8
 
-# In[61]:
+# In[82]:
 
 
 import numpy as np
-DTABLE = np.array([[0, .31, 1.01, .75, 1.03], [.31, 0, 1, .69, .9], [1.01, 1, 0, .61, .42], [.75, .69, .61, 0, .37], [1.03, .9, .42, .37, 0]])
+DTABLE = np.array([[0, -50, -38, -34, -34], [-50, 0, -38, -34, -34], [-38, -38, 0, -40, -40], [-34, -34, -40, 0, -48], [-34, -34, -40, -48, 0]])
+# DTABLE = np.array([[0, .31, 1.01, .75, 1.03], [.31, 0, 1, .69, .9], [1.01, 1, 0, .61, .42], [.75, .69, .61, 0, .37], [1.03, .9, .42, .37, 0]])
 
 
-# In[68]:
+# In[83]:
+
+
+DTABLE
+
+
+# In[86]:
 
 
 def row_sums(DTABLE):
@@ -39,5 +46,25 @@ def cherry(DTABLE, f, g):
             else:
                 NEW_D.append(DTABLE[i][j])
     NEW_D = np.array(NEW_D).reshape((DTABLE.shape[0] - 1, DTABLE.shape[0] - 1))
-    return calc_Q(NEW_D), DFU, DGU
+    return NEW_D, DFU, DGU
+
+def find_min(X):
+    min = 99999999
+    minIJ = None
+    for i in range(len(X)):
+        for j in range(len(X[0])):
+            if X[i][j] < min and i != j:
+                min = X[i][j]
+                minIJ = (i, j)
+    return minIJ
+
+def get_all_cherries(DTABLE):
+    n = DTABLE.shape[0]
+    for i in range(n - 1):
+        Q = calc_Q(DTABLE)
+        f,g = find_min(Q)
+        res = cherry(DTABLE, f, g)
+        yield (f, g, res[1:])
+        DTABLE = res[0]
+print(list(get_all_cherries(DTABLE)))
 
