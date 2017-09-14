@@ -1,21 +1,21 @@
 
 # coding: utf-8
 
-# In[82]:
+# In[7]:
 
 
 import numpy as np
-DTABLE = np.array([[0, -50, -38, -34, -34], [-50, 0, -38, -34, -34], [-38, -38, 0, -40, -40], [-34, -34, -40, 0, -48], [-34, -34, -40, -48, 0]])
-# DTABLE = np.array([[0, .31, 1.01, .75, 1.03], [.31, 0, 1, .69, .9], [1.01, 1, 0, .61, .42], [.75, .69, .61, 0, .37], [1.03, .9, .42, .37, 0]])
+# DTABLE = np.array([[0, 5, 9, 9, 8], [5, 0, 10, 10, 9], [9, 10, 0, 8, 7], [9, 10, 8, 0, 3], [8, 9, 7, 3, 0]])
+DTABLE = np.array([[0, .31, 1.01, .75, 1.03], [.31, 0, 1, .69, .9], [1.01, 1, 0, .61, .42], [.75, .69, .61, 0, .37], [1.03, .9, .42, .37, 0]])
 
 
-# In[83]:
+# In[8]:
 
 
 DTABLE
 
 
-# In[86]:
+# In[9]:
 
 
 def row_sums(DTABLE):
@@ -32,6 +32,8 @@ def calc_Q(DTABLE):
     return Q
 
 def cherry(DTABLE, f, g):
+    n = DTABLE.shape[0]
+    Rs = row_sums(DTABLE)
     NEW_D = []
     DFU = (1/2)*DTABLE[f][g] + (1/(2*(n - 2))) * (Rs[f] - Rs[g])
     DGU = DTABLE[f][g] - DFU
@@ -60,7 +62,7 @@ def find_min(X):
 
 def get_all_cherries(DTABLE):
     n = DTABLE.shape[0]
-    for i in range(n - 1):
+    for i in range(n - 2):
         Q = calc_Q(DTABLE)
         f,g = find_min(Q)
         res = cherry(DTABLE, f, g)
