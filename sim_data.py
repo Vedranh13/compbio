@@ -16,6 +16,19 @@ def mutate_site(bp, com, intra = .75):
     return bp
 
 
+def mutate_site_jc(bp, mu):
+    r = np.random.uniform()
+    pairs = ["A", "G", "T", "C"]
+    pairs.remove(bp)
+    if r < mu:
+        return pairs[0]
+    if r < 2*mu:
+        return pairs[1]
+    if r < 3*mu:
+        return pairs[2]
+    return bp
+
+
 def mutate_str_uniform(seq, com, intra = .75):
     """Non desctructive mutations"""
     return "".join([mutate_site(bp, com, intra) for bp in seq])
@@ -31,3 +44,7 @@ def mutate_site_ik_gauss(seq, i, k, com, intra=.75):
 
 def mutate_site_ik_laplace(seq, i, k, com, intra=.75):
     return "".join([mutate_site(seq[i], gennorm.pdf(c, 1, (i + k) / 2, 1.0 / com)) for c in range(len(seq))])
+
+
+def mutate_str(seq, mu):
+    return "".join([mutate_site_jc(bp, mu) for bp in seq])
