@@ -4,6 +4,7 @@ from utils import get_comp
 from utils import get_rand_ortho
 from scipy.stats import gennorm
 
+
 def mutate_site(bp, com, intra = .75):
     trans = (1 - intra)
     r = np.random.uniform()

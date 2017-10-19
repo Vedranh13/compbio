@@ -2,6 +2,7 @@ import unittest
 import JC
 import utils
 import NJ
+import random
 
 class TestJCMethods(unittest.TestCase):
 
@@ -37,16 +38,28 @@ class TestJCMethods(unittest.TestCase):
         self.assertEqual(in_to_real[1], true)
 
 
-    def test_simulate(self):
+    def test_simulate_error_extinct(self):
         """Want a tree like     A
                             |           |
 
                         |            C     D
                     B
                             |
-                        E       F"""
+                        E       F
+        Basically, this test does neighboor joining when some of the species dies long before others"""
         cs61a = [100, [50, [], [100, [], []]], [150, [], []]]
-        strands = JC.evolve(utils.gen_base_strand(15), cs61a, .005)
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .0005)
+        print(NJ.join(strands))
+
+
+    def test_simulate_simple(self):
+        """Want a tree like     A
+                            |           |
+
+                        E       F      C     D
+            Very simple, standard tree"""
+        cs61a = [100, [50, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
         print(NJ.join(strands))
 if __name__ == '__main__':
     unittest.main()
