@@ -5,6 +5,8 @@
 
 
 import numpy as np
+from utils import jc_distance
+from utils import newick_cherry
 # DTABLE = np.array([[0, 5, 9, 9, 8], [5, 0, 10, 10, 9], [9, 10, 0, 8, 7], [9, 10, 8, 0, 3], [8, 9, 7, 3, 0]])
 DTABLE = np.array([[0, .31, 1.01, .75, 1.03], [.31, 0, 1, .69, .9], [1.01, 1, 0, .61, .42], [.75, .69, .61, 0, .37], [1.03, .9, .42, .37, 0]])
 
@@ -68,5 +70,26 @@ def get_all_cherries(DTABLE):
         res = cherry(DTABLE, f, g)
         yield (f, g, res[1:])
         DTABLE = res[0]
-print(list(get_all_cherries(DTABLE)))
 
+def get_DTABLE(lst_strands):
+    DTABLE = []
+    for i in lst_strands:
+        row = []
+        for j in lst_strands:
+            row.append(jc_distance(i, j))
+        DTABLE.append(row)
+    return np.matrix(DTABLE)
+
+def join(lst_strands):
+    DTABLE = get_DTABLE(lst_strands)
+    N = len(lst_strands)
+    in_to_real = {a : a for a in range(1, N + 1)}
+    for f, g, DFU, DGU in get_all_cherries(DTABLE):
+        f += 1
+        g += 1
+        spec1 = in_to_real[f]
+        spec2 = in_to_real[g]
+        for spec in range(g + 1, N):
+            in_to_real[spec] = in_to_real[spec + 1]
+        in_to_real[f] = newick_cherry(spec1, spec2, DFU, DGU)
+    return in_to_real[1]

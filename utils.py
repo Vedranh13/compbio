@@ -46,3 +46,7 @@ def gen_base_strand(length):
         else:
             bases.append("C")
     return "".join(bases)
+
+
+def newick_cherry(f, g, df, dg):
+    return "(" + str(f) + ":" + str(df) + "," + str(g) + ":" + str(dg) + ")"
