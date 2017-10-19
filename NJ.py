@@ -67,6 +67,8 @@ def get_all_cherries(DTABLE):
     for i in range(n - 2):
         Q = calc_Q(DTABLE)
         min = find_min(Q)
+        if (not min):
+            break
         f, g = min
         res = cherry(DTABLE, f, g)
         yield (f, g, res[1:])
