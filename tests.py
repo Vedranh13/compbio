@@ -2,6 +2,8 @@ import unittest
 import JC
 import utils
 import NJ
+import sim_data
+import numpy as np
 
 
 class TestJCMethods(unittest.TestCase):
@@ -11,11 +13,12 @@ class TestJCMethods(unittest.TestCase):
         # tree = [10, [5, [15], [15, [3], [3]]], [5]]
         tree = [100, [50, [], [100, [], []]], [150, [], []]]
         data = JC.evolve(base, tree, .005)
-        print(base)
+        # print(base)
         self.assertEqual(len(data), 5)
-        print(data)
-        for left in data:
-            print(utils.jc_distance(base, left))
+        # uncomment to see simulated data
+        # print(data)
+        # for left in data:
+        #     print(utils.jc_distance(base, left))
 
     def test_newick_cherry(self):
         true = "(1:0.5,3:0.2)"
@@ -44,9 +47,10 @@ class TestJCMethods(unittest.TestCase):
                             |
                         E       F
         Basically, this test does neighboor joining when some of the species dies long before others"""
+        np.random.seed(9001)
         cs61a = [100, [50, [], [100, [], []]], [150, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .0005)
-        print(NJ.join(strands))
+        print("Extinct species tree:\n", NJ.join(strands))
 
     def test_simulate_simple(self):
         """Want a tree like     A
@@ -54,19 +58,58 @@ class TestJCMethods(unittest.TestCase):
 
                         E       F      C     D
             Very simple, standard tree"""
+        np.random.seed(9001)
         cs61a = [100, [50, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
-        print(NJ.join(strands))
+        print("Simple 4 leaf tree:\n", NJ.join(strands))
 
     def test_simulate_simple_big(self):
         """Want a tree like     A
                             |           |
 
                         E       F      C     D ...
-            Very simple, standard tree, but with many leaves"""
+            Very simple, standard tree, but with many leaves.
+            Here is the graphical output from my computer:
+            http://etetoolkit.org/treeview/?treeid=1608e9140c43b5ff34999961ef5ed425&algid="""
+        np.random.seed(9001)
         cs61a = [100, [50, [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]], [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]]], [50, [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]], [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]]]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .0005)
-        print(NJ.join(strands))
+        print("32 Leaf Tree:\n", NJ.join(strands))
+
+    def test_simulate_simple_uni5(self):
+        """Want a tree like     A
+                            |           |
+
+                        E       F      C     D
+            Very simple, standard tree, but with five percent uniform corruption.
+            As you should see, this level noise affects the distances, but not the topology.
+            Note however that in certain cases it could affect both due to chance mutation patterns
+            that are extra bad. In the process of testing this, the percent of times this occurs is
+            slightly less than 50, showing that this implementation of neighboor joining is quite
+            suspestible to error, even with just 5% corruption"""
+        np.random.seed(1512)
+        cs61a = [100, [100, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
+        for i in range(len(strands)):
+            strands[i] = sim_data.mutate_str_uniform(strands[i], .05)
+        print("5 % corrupted tree:\n", NJ.join(strands))
+
+    def test_simulate_simple_uni10(self):
+        """Want a tree like     A
+                            |           |
+
+                        E       F      C     D
+            Very simple, standard tree, but with five percent uniform corruption.
+            As you should see, this level noise affects both distances and topologies, intermixing
+            leaves from the left and right subtrees. Again, with only 10%, we see a major
+            deviance from the true tree, showing the sensitivity of neighboor joining."""
+        np.random.seed(1512)
+        cs61a = [100, [100, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
+        print("True Tree:\n", NJ.join(strands))
+        for i in range(len(strands)):
+            strands[i] = sim_data.mutate_str_uniform(strands[i], .1)
+        print("10 % corrupted tree:\n", NJ.join(strands))
 
 
 if __name__ == '__main__':
