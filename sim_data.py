@@ -31,7 +31,6 @@ def mutate_site_jc(bp, mu):
 
 
 def mutate_str_uniform(seq, com, intra = .75):
-    """Non desctructive mutations"""
     return "".join([mutate_site(bp, com, intra) for bp in seq])
 
 
@@ -49,3 +48,20 @@ def mutate_site_ik_laplace(seq, i, k, com, intra=.75):
 
 def mutate_str(seq, mu):
     return "".join([mutate_site_jc(bp, mu) for bp in seq])
+
+
+def create_k_copies(lst, k):
+    """Creates k copies of each of the n strands"""
+    nk_lst = []
+    for seq in lst:
+        for _ in range(k):
+            nk_lst.append(seq)
+    return nk_lst
+
+
+def mutate_samples_uniform(lst, k, com):
+    nk = create_k_copies(lst, k)
+    data = []
+    for seq in lst:
+        data.append(mutate_str(seq, com))
+    return data
