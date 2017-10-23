@@ -95,7 +95,7 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(9001)
         cs61a = [100, [50, [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]], [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]]], [50, [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]], [15, [200, [150, [], []], [150, [], []]], [200, [150, [], []], [150, [], []]]]]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .0005)
-        print("32 Leaf Tree:\n", NJ.join(strands))
+        utils.draw(NJ.join(strands), title="32 Leaf Tree")
 
     def test_simulate_simple_uni5(self):
         """Want a tree like     A
@@ -113,7 +113,7 @@ class TestJCMethods(unittest.TestCase):
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
         for i in range(len(strands)):
             strands[i] = sim_data.mutate_str_uniform(strands[i], .05)
-        print("5 % corrupted tree:\n", NJ.join(strands))
+        utils.draw(NJ.join(strands), title="5 % corrupted tree")
 
     def test_simulate_simple_uni10(self):
         """Want a tree like     A
@@ -127,10 +127,10 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(1512)
         cs61a = [100, [100, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
-        print("True Tree:\n", NJ.join(strands))
+        utils.draw(NJ.join(strands), "True Tree")
         for i in range(len(strands)):
             strands[i] = sim_data.mutate_str_uniform(strands[i], .1)
-        print("10 % corrupted tree:\n", NJ.join(strands))
+        utils.draw(NJ.join(strands), title="10 % corrupted tree")
 
     def test_simulate_simple_gauss1(self):
         """Want a tree like     A
@@ -142,10 +142,9 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(1512)
         cs61a = [100, [100, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
-        print(strands)
         for i in range(len(strands)):
             strands[i] = sim_data.mutate_site_ik_gauss(strands[i], 10, 20, .01)
-        utils.draw(NJ.join(strands), "1 % corrupted Gaussian tree (results in severe errors due to negative)")
+        utils.draw(NJ.join(strands), title="1 % corrupted Gaussian tree (results in severe errors due to negative)")
 
     def test_simulate_simple_lap1(self):
         """Want a tree like     A
@@ -157,10 +156,9 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(1512)
         cs61a = [100, [100, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
-        print(strands)
         for i in range(len(strands)):
             strands[i] = sim_data.mutate_site_ik_gauss(strands[i], 10, 20, .01)
-        utils.draw(NJ.join(strands), "1 % corrupted Laplace tree (results in severe errors due to negative)")
+        utils.draw(NJ.join(strands), title="1 % corrupted Laplace tree (results in severe errors due to negative)")
 
 if __name__ == '__main__':
     unittest.main()
