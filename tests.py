@@ -58,7 +58,7 @@ class TestJCMethods(unittest.TestCase):
         cs61a = [100, [50, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
         print("4 species with 5 noisy samples:")
-        print(noise.join_noised(strands, 5))
+        utils.draw(noise.join_noised(strands, 5))
 
     def test_simulate_error_extinct(self):
         """Want a tree like     A
