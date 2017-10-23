@@ -62,6 +62,6 @@ def create_k_copies(lst, k):
 def mutate_samples_uniform(lst, k, com):
     nk = create_k_copies(lst, k)
     data = []
-    for seq in lst:
+    for seq in nk:
         data.append(mutate_str(seq, com))
     return data

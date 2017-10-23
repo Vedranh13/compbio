@@ -4,6 +4,7 @@ import utils
 import NJ
 import sim_data
 import numpy as np
+import noise
 
 
 class TestJCMethods(unittest.TestCase):
@@ -37,6 +38,27 @@ class TestJCMethods(unittest.TestCase):
         true = utils.newick_cherry(true, 4, .55, .63)
         true = utils.newick_cherry(true, utils.newick_cherry(3, 5, .2, .8), .9, .91)
         self.assertEqual(in_to_real[1], true)
+
+    def test_create_k_copies(self):
+        np.random.seed(1512)
+        cs61a = [100, [50, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
+        nk = sim_data.create_k_copies(strands, 5)
+        self.assertEqual(len(nk), 20)
+        self.assertEqual(len(set(nk)), 4)
+
+    def test_k_samples_uniform(self):
+        """Takes in a simple tree and simulates having k noisy
+        samples from each of the n true species and perform NJ as if
+        it was nk species. We should see n subtrees of k members each. We
+        see almost that, with a few species crossing over, which makes
+        sense because we do have information loss and we have seen below
+        how NJ can be sensative to uniform noise"""
+        np.random.seed(1512)
+        cs61a = [100, [50, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
+        print("4 species with 5 noisy samples:")
+        print(noise.join_noised(strands, 5))
 
     def test_simulate_error_extinct(self):
         """Want a tree like     A
