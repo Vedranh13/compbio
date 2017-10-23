@@ -5,16 +5,15 @@ from io import StringIO   #if you are writing in python 2, use this: from cStrin
 import  matplotlib
 import matplotlib.pyplot as plt
 
-def draw(treedata, output_file=""):
+def draw(treedata, title="Untitled"):
     handle = StringIO(treedata)
     tree = Phylo.read(handle, 'newick')
     matplotlib.rc('font', size=6)
     fig = plt.figure()
     axes = fig.add_subplot(1, 1, 1)
     Phylo.draw(tree, axes=axes, do_show=False)
+    plt.title(title)
     plt.show()
-    #plt.savefig(output_file+'.png')
-    #plt.savefig(output_file+’.pdf’, format=‘PDF’)    #if you want to save as pdf file
 
 
 def get_comp(base_pair):

@@ -57,8 +57,7 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(1512)
         cs61a = [100, [50, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
-        print("4 species with 5 noisy samples:")
-        utils.draw(noise.join_noised(strands, 5))
+        utils.draw(noise.join_noised(strands, 5), title="4 species with 5 noisy samples")
 
     def test_simulate_error_extinct(self):
         """Want a tree like     A
@@ -72,7 +71,7 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(9001)
         cs61a = [100, [50, [], [100, [], []]], [150, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .0005)
-        print("Extinct species tree:\n", NJ.join(strands))
+        utils.draw(NJ.join(strands), title="Extinct species tree")
 
     def test_simulate_simple(self):
         """Want a tree like     A
@@ -83,7 +82,7 @@ class TestJCMethods(unittest.TestCase):
         np.random.seed(9001)
         cs61a = [100, [50, [], []], [100, [], []]]
         strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
-        print("Simple 4 leaf tree:\n", NJ.join(strands))
+        utils.draw(NJ.join(strands), title="Simple 4 leaf tree")
 
     def test_simulate_simple_big(self):
         """Want a tree like     A
