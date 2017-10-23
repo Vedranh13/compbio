@@ -1,5 +1,6 @@
 from scipy.io import loadmat
 from NJ import join
+from utils import draw
 data = loadmat('flhivdata.mat')
 lst_strands = []
 minLen = 9999999999
@@ -16,5 +17,7 @@ for key, value in data.items():
     i += 1
 for i in range(len(lst_strands)):
     lst_strands[i] = lst_strands[i][:minLen]
-print(join(lst_strands))
-print(int_to_name)
+out = join(lst_strands)
+for key in int_to_name.keys():
+    out = out.replace(str(key) + ":", str(int_to_name[key]) + ":")
+draw(out)
