@@ -120,7 +120,7 @@ class TestJCMethods(unittest.TestCase):
                             |           |
 
                         E       F      C     D
-            Very simple, standard tree, but with five percent uniform corruption.
+            Very simple, standard tree, but with ten percent uniform corruption.
             As you should see, this level noise affects both distances and topologies, intermixing
             leaves from the left and right subtrees. Again, with only 10%, we see a major
             deviance from the true tree, showing the sensitivity of neighboor joining."""
@@ -132,6 +132,35 @@ class TestJCMethods(unittest.TestCase):
             strands[i] = sim_data.mutate_str_uniform(strands[i], .1)
         print("10 % corrupted tree:\n", NJ.join(strands))
 
+    def test_simulate_simple_gauss1(self):
+        """Want a tree like     A
+                            |           |
+
+                        E       F      C     D
+            Very simple, standard tree, but with 1 percent Gaussian corruption in the middle ten sites.
+            Note, however, that this blows up even with just one percent, showing how over sensative this is"""
+        np.random.seed(1512)
+        cs61a = [100, [100, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
+        print(strands)
+        for i in range(len(strands)):
+            strands[i] = sim_data.mutate_site_ik_gauss(strands[i], 10, 20, .01)
+        utils.draw(NJ.join(strands), "1 % corrupted Gaussian tree (results in severe errors due to negative)")
+
+    def test_simulate_simple_lap1(self):
+        """Want a tree like     A
+                            |           |
+
+                        E       F      C     D
+            Very simple, standard tree, but with 1 percent Laplace corruption in the middle ten sites.
+            Note, however, that this blows up even with just one percent, showing how over sensative this is"""
+        np.random.seed(1512)
+        cs61a = [100, [100, [], []], [100, [], []]]
+        strands = JC.evolve(utils.gen_base_strand(30), cs61a, .005)
+        print(strands)
+        for i in range(len(strands)):
+            strands[i] = sim_data.mutate_site_ik_gauss(strands[i], 10, 20, .01)
+        utils.draw(NJ.join(strands), "1 % corrupted Laplace tree (results in severe errors due to negative)")
 
 if __name__ == '__main__':
     unittest.main()
