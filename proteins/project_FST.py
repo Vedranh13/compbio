@@ -2,6 +2,7 @@
 from numpy.fft import fftn, ifftn, fftshift, ifftshift
 from numpy import arange, linspace, meshgrid, array, vectorize, newaxis, moveaxis
 from numpy import real, imag
+import numpy.linalg as LA
 from scipy.interpolate import RegularGridInterpolator
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -9,6 +10,8 @@ import utils
 
 def project_fst(rho, a, b):
     """"""
+    a = a / LA.norm(a)
+    b = b / LA.norm(b)
     rho = utils.load_protein('zika_153.mrc')
     print(rho.shape)
     rhoh = fourier_lin(rho)
