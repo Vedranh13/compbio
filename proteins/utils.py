@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from project_FST import fourier_lin, project_fst
 import torch
 from os import listdir
+from PIL import Image
 
 def generate_protein_gauss(n):
     """This simulates a protein's 3D energy potential as just a gaussian blob"""
@@ -54,7 +55,7 @@ def read_dict(dir='dataset'):
 
 class ImageLoader(torch.utils.data.Dataset):
     """Credit: https://stackoverflow.com/questions/45099554/how-to-simplify-dataloader-for-autoencoder-in-pytorch"""
-    def __init__(self, prot, dir='dataset', tform=None, imgloader=plt.imread):
+    def __init__(self, prot, dir='dataset', tform=None, imgloader=Image.open):
         super(ImageLoader, self).__init__()
 
         self.dir = dir
@@ -68,7 +69,10 @@ class ImageLoader(torch.utils.data.Dataset):
 
     def __getitem__(self, i):
         out = self.imgloader(self.dir + "/" + self.filenames[i])
-        out.resize((124,124,4))
+        # HOW TO RESIZE AND COMBINE SHITE http://scipy-cookbook.readthedocs.io/items/Matplotlib_AdjustingImageSize.html
+        # out.resize((124,100,4))
+        # RESIZED using: http://matplotlib.org/users/image_tutorial.html
+        out.thumbnail((124, 124, 4), Image.ANTIALIAS)
         is_prot =  1 if self.prot in self.filenames[i] else 0
         if self.tform:
             out = self.tform(out)

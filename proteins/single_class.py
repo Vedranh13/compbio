@@ -36,14 +36,15 @@ class Net(nn.Module):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(4, 128, 4)
+        self.conv1 = nn.Conv2d(4, 6, 4)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(128, 256, 3)
+        self.conv2 = nn.Conv2d(6, 16, 3)
         self.out = nn.Linear(4, 2)
         # Barley learning, need to beef up model
-        self.fc1 = nn.Linear(12544, 124 * 16)
-        self.fc2 = nn.Linear(124 * 16, 24 * 32)
-        self.fc3 = nn.Linear(24 * 32, 2)
+        # Beefed up by having first layer: 4 to 128, then 128 to 256, bunch of linear down
+        self.fc1 = nn.Linear(13456, 124)
+        self.fc2 = nn.Linear(124, 24)
+        self.fc3 = nn.Linear(24, 2)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
