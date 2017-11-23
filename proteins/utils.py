@@ -3,6 +3,8 @@ import numpy as np
 import mrcfile
 import matplotlib.pyplot as plt
 from project_FST import fourier_lin, project_fst
+import torch
+from os import listdir
 
 def generate_protein_gauss(n):
     """This simulates a protein's 3D energy potential as just a gaussian blob"""
@@ -40,3 +42,38 @@ def gen_randim(rhoh, n):
 def save_dict(dct, dir='dataset'):
     for k,v in dct.items():
         plt.imsave(dir + '/' + k + ".png", v, format="png", cmap=plt.cm.gray)
+
+
+def read_dict(dir='dataset'):
+    dct = {}
+    all_files = listdir(dir)
+    for prot in all_files:
+        dct[prot] = torch.from_numpy(plt.imread(dir + '/' + prot))
+    return dct
+
+
+class ImageLoader(torch.utils.data.Dataset):
+    """Credit: https://stackoverflow.com/questions/45099554/how-to-simplify-dataloader-for-autoencoder-in-pytorch"""
+    def __init__(self, prot, dir='dataset', tform=None, imgloader=plt.imread):
+        super(ImageLoader, self).__init__()
+
+        self.dir = dir
+        self.prot = prot
+        self.filenames = listdir(dir)
+        self.tform = tform
+        self.imgloader = imgloader
+
+    def __len__(self):
+        return len(self.filenames)
+
+    def __getitem__(self, i):
+        out = self.imgloader(self.dir + "/" + self.filenames[i])
+        out.resize((124,124,4))
+        is_prot =  1 if self.prot in self.filenames[i] else 0
+        if self.tform:
+            out = self.tform(out)
+        return out, is_prot
+
+
+def enlarge_nd(arr, new_shape):
+    new = arr.reshape(new_shape)
