@@ -101,4 +101,16 @@ def assert_no_incest(train_dir='dataset', test_dir='dataset/test'):
 
 
 def visualize_kernels(net):
-    return net.Parameters()
+    from torchvision import transforms as tf
+    from torch.autograd import Variable
+    trainloader = torch.utils.data.DataLoader(ImageLoader(tform=tf.ToTensor()), batch_size=4,
+                                              shuffle=True, num_workers=2)
+    im, _ = next(iter(trainloader))
+    ker = net.conv1
+    # ker_one = net.conv1.weight.data
+    out = ker(Variable(im))
+    out = out.data.numpy()
+    im = im.numpy()
+    # import pdb; pdb.set_trace()
+    plt.imsave("orig.png", im[0], format='png', cmap=plt.cm.gray)
+    plt.imsave("ker.png", out[0][0], format='png', cmap=plt.cm.gray)

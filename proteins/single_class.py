@@ -8,6 +8,7 @@ import torchvision
 import torchvision.transforms as transforms
 import pdb
 from utils import ImageLoader
+from noise import add_uniform
 
 
 class Net(nn.Module):
@@ -74,13 +75,11 @@ def forward_backward(net, crit, optim, data, back=True):
 
 def train(net, epochs, crit, optim, trainloader, testloader=None):
     """Trains net"""
-    if testloader:
-        data_gen = zip(trainloader, testloader)
-    else:
-        data_gen = trainloader
-
-    for epoch in range(2):  # loop over the dataset multiple times
-
+    for epoch in range(epochs):  # loop over the dataset multiple times
+        if testloader:
+            data_gen = zip(trainloader, testloader)
+        else:
+            data_gen = trainloader
         running_loss = 0.0
         for i, zipped in enumerate(data_gen, 0):
             # get the inputs
@@ -107,12 +106,13 @@ def train(net, epochs, crit, optim, trainloader, testloader=None):
 net = Net(2)
 net.zero_grad()
 
-trainset = ImageLoader(tform=transforms.ToTensor())
+tf = transforms.Compose([transforms.ToTensor(), transforms.Lambda(add_uniform(-.5, .5))])
+trainset = ImageLoader(tform=tf)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
 
 # Should we still be doing pos / neg?
-testset = ImageLoader(tform=transforms.ToTensor(), test=True)
+testset = ImageLoader(tform=tf, test=True)
 
 testloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                           shuffle=True, num_workers=2)
@@ -120,7 +120,7 @@ testloader = torch.utils.data.DataLoader(trainset, batch_size=4,
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-train(net, 3, criterion, optimizer, trainloader, testloader=testloader)
+train(net, 2, criterion, optimizer, trainloader, testloader=testloader)
 # for epoch in range(2):  # loop over the dataset multiple times
 #
 #     running_loss = 0.0
