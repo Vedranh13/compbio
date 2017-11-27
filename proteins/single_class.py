@@ -6,39 +6,19 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-import pdb
 from utils import ImageLoader
-from noise import add_uniform
+from noise import make_noisy_tf
+from sliding_window import decomp_im
 
 
 class Net(nn.Module):
 
-    # def __init__(self):
-    #     super(Net, self).__init__()
-    #     # 1 input image channel, 6 output channels, 5x5 square convolution
-    #     # kernel
-    #     self.conv1 = nn.Conv2d(4, 6, 5)
-    #     self.conv2 = nn.Conv2d(6, 16, 5)
-    #     # an affine operation: y = Wx + b
-    #     self.fc1 = nn.Linear(16 * 5 * 5, 120)
-    #     self.fc2 = nn.Linear(120, 84)
-    #     self.fc3 = nn.Linear(84, 1)
-    #
-    # def forward(self, x):
-    #     # Max pooling over a (2, 2) window
-    #     x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-    #     # If the size is a square you can only specify a single number
-    #     x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-    #     x = x.view(-1, self.num_flat_features(x))
-    #     x = F.relu(self.fc1(x))
-    #     x = F.relu(self.fc2(x))
-    #     x = self.fc3(x)
-    #     return x
-
-    def __init__(self, num_prots, batchsize=4, img_chan=4):
+    def __init__(self, num_prots, width=124, height=124, img_chan=4):
         super(Net, self).__init__()
         self.C = num_prots
-        self.N = batchsize
+        self.W = width
+        self.H = height
+        self.CHAN = img_chan
         self.conv1 = nn.Conv2d(img_chan, 6, 4)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 3)
@@ -53,12 +33,21 @@ class Net(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         # Should probably have not hard code batchsize of 4
-        x = x.view(self.N, -1) # 16 * 4 * 4
+        # x = x.view(self.N, -1) # 16 * 4 * 4
+        x = x.view(-1, 13456)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         # x = self.out(x)
         return x
+
+    def multiple(self, im):
+        w, h = im.size
+        all_decomps = decomp_im(im, self.W, self.H)
+        to_ten = transforms.ToTensor().__call__
+        scores = torch.Tensor(w - self.W, h - self.H, self.C)
+        for i, prot in enumerate(all_decomps, 0):
+            scores[i // self.W][i % self.W] = self.forward(to_ten(prot))
 
 
 def forward_backward(net, crit, optim, data, back=True):
@@ -73,8 +62,9 @@ def forward_backward(net, crit, optim, data, back=True):
     return loss
 
 
-def train(net, epochs, crit, optim, trainloader, testloader=None):
+def train(net, epochs, crit, optim, trainloader, testloader=None, total_err=False):
     """Trains net"""
+    losses = []
     for epoch in range(epochs):  # loop over the dataset multiple times
         if testloader:
             data_gen = zip(trainloader, testloader)
@@ -97,60 +87,85 @@ def train(net, epochs, crit, optim, trainloader, testloader=None):
                 loss = forward_backward(net, crit, optim, test_data, back=False)
 
             running_loss += loss.data[0]
-            if i % 200 == 0:    # print every 2000 mini-batches
+            if i % 200 == 0 and i != 0:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 200))
+                losses.append(running_loss / 200)
                 running_loss = 0.0
+    if not total_err:
+        return
+    loss = 0
+    n = 0
+    dg = iter(testloader)
+    for test_data in dg:
+        loss += forward_backward(net, crit, optim, test_data, back=False)
+        n += 1
+    losses.append(loss / n)
+    return losses
 
 
-net = Net(2)
-net.zero_grad()
+def train_simple(report_errs=False):
+    net = Net(2)
+    net.zero_grad()
+    tf = transforms.ToTensor()
+    trainset = ImageLoader(tform=tf)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                              shuffle=True, num_workers=2)
+    testset = ImageLoader(tform=tf, test=True)
+    testloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                              shuffle=True, num_workers=2)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-tf = transforms.Compose([transforms.ToTensor(), transforms.Lambda(add_uniform(-.5, .5))])
-trainset = ImageLoader(tform=tf)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
+    losses = train(net, 2, criterion, optimizer, trainloader, testloader=testloader, total_err=report_errs)
+    if report_errs:
+        import matplotlib.pyplot as plt
+        plt.plot([i for i in range(len(losses))], losses)
+        plt.title("Test error over mini-batches, no noise")
+        plt.xlabel("Mini-batch")
+        plt.ylabel("Test Set Error")
+        plt.savefig("simple_train_err.png")
+    return net
 
-# Should we still be doing pos / neg?
-testset = ImageLoader(tform=tf, test=True)
 
-testloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                          shuffle=True, num_workers=2)
+def train_uniform_noise(report_errs=True):
+    net = Net(2)
+    net.zero_grad()
+    tf = make_noisy_tf(.5)
+    trainset = ImageLoader(tform=tf)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                              shuffle=True, num_workers=2)
+    testset = ImageLoader(tform=tf, test=True)
+    testloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                              shuffle=True, num_workers=2)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    losses = train(net, 2, criterion, optimizer, trainloader, testloader=testloader, total_err=report_errs)
+    if report_errs:
+        import matplotlib.pyplot as plt
+        plt.plot([i for i in range(len(losses))], losses)
+        plt.title("Test error over mini-batches, no noise")
+        plt.xlabel("Mini-batch")
+        plt.ylabel("Test Set Error")
+        plt.savefig("simple_train_err.png")
+    return net
 
-train(net, 2, criterion, optimizer, trainloader, testloader=testloader)
-# for epoch in range(2):  # loop over the dataset multiple times
+# net = Net(2)
+# net.zero_grad()
 #
-#     running_loss = 0.0
-#     for i, zipped in enumerate(zip(trainloader, testloader), 0):
-#         # get the inputs
-#         data, test_data = zipped
-#         print(epoch, i)
-#         inputs, labels = data
+# tf = make_noisy_tf(spread=1)
+# trainset = ImageLoader(tform=tf)
+# trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+#                                           shuffle=True, num_workers=2)
 #
-#         # wrap them in Variable
-#         inputs, labels = Variable(inputs), Variable(labels)
+# # Should we still be doing pos / neg?
+# testset = ImageLoader(tform=tf, test=True)
 #
-#         # zero the parameter gradients
-#         optimizer.zero_grad()
+# testloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+#                                           shuffle=True, num_workers=2)
 #
-#         # forward + backward + optimize
-#         outputs = net(inputs)
-#         # print(outputs.size())
-#         # print(labels.size())
-#         loss = criterion(outputs, labels)
-#         loss.backward()
-#         optimizer.step()
+# criterion = nn.CrossEntropyLoss()
+# optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 #
-#         # Test error
-#         inputs, labels = test_data
-#         inputs, labels = Variable(inputs), Variable(labels)
-#         outputs = net(inputs)
-#         loss = criterion(outputs, labels)
-#         running_loss += loss.data[0]
-#         if i % 200 == 0:    # print every 2000 mini-batches
-#             print('[%d, %5d] loss: %.3f' %
-#                   (epoch + 1, i + 1, running_loss / 200))
-#             running_loss = 0.0
+# train(net, 2, criterion, optimizer, trainloader, testloader=testloader)
