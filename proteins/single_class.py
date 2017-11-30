@@ -50,8 +50,10 @@ class Net(nn.Module):
             scores[i // self.W][i % self.W] = self.forward(to_ten(prot))
 
 
-def forward_backward(net, crit, optim, data, back=True):
+def forward_backward(net, crit, optim, data, back=True, cuda=True):
     inputs, labels = data
+    if cuda:
+        inputs, labels = inputs.cuda(), labels.cuda()
     inputs, labels = Variable(inputs), Variable(labels)
     optim.zero_grad()
     outputs = net(inputs)
@@ -62,7 +64,7 @@ def forward_backward(net, crit, optim, data, back=True):
     return loss
 
 
-def train(net, epochs, crit, optim, trainloader, testloader=None, total_err=False):
+def train(net, epochs, crit, optim, trainloader, testloader=None, total_err=False, cuda=True):
     """Trains net"""
     losses = []
     for epoch in range(epochs):  # loop over the dataset multiple times
@@ -107,7 +109,9 @@ def train(net, epochs, crit, optim, trainloader, testloader=None, total_err=Fals
 def train_simple(report_errs=False):
     net = Net(2)
     net.zero_grad()
-    tf = transforms.ToTensor()
+    net.cuda()
+    tf = transforms.Compose([transforms.ToTensor()])#, transforms.Lambda(lambda x: x.cuda())])
+    # tf = transforms.ToTensor()
     trainset = ImageLoader(tform=tf)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                               shuffle=True, num_workers=2)
