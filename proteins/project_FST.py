@@ -22,7 +22,10 @@ def fourier_lin(ten):
     tenh = fftn(ten)
     tenh = fftshift(tenh)
     n = ten.shape[0]
-    a = arange(-(n - 1)/2, (n + 1)/2)
+    if n % 2 == 0:
+        a = arange(-(n)/2, n/2)
+    else:
+        a = arange(-(n - 1)/2, (n + 1)/2)
     x, y, z = meshgrid(a, a, a, indexing="ij")
 
     tenh *= (-1) ** abs(x + y + z)
@@ -40,8 +43,12 @@ def fourier_lin(ten):
 
 
 def sample_naive(func, a, b, n=50): # n should probs be smart
-    x = arange(-(n - 1)/2 , (n + 1)/2 + 1, 1) # * a
-    y = arange(-(n - 1)/2 , (n + 1)/2 + 1, 1) # * b
+    if n % 2 == 0:
+        x = arange(-(n)/2, n/2 )
+        y = arange(-(n)/2, n/2)
+    else:
+        x = arange(-(n - 1)/2 , (n + 1)/2, 1) # * a
+        y = arange(-(n - 1)/2 , (n + 1)/2, 1) # * b
     # z = linspace(0, 0, x.shape[0])
     f = lambda x: complex(x)
     f = vectorize(f)
