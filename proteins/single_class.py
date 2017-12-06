@@ -45,15 +45,19 @@ class Net(nn.Module):
         w, h = im.size
         all_decomps = decomp_im(im, self.W, self.H)
         to_ten = transforms.ToTensor().__call__
-        scores = torch.Tensor(w - self.W, h - self.H, self.C)
+        scores = torch.cuda.FloatTensor(w - self.W, h - self.H, self.C)
         for i, prot in enumerate(all_decomps, 0):
-            scores[i // self.W][i % self.W] = self.forward(to_ten(prot))
+            mult = to_ten(prot).unsqueeze(0)
+            mult = mult.type(torch.cuda.FloatTensor)
+            mult = Variable(mult)
+            scores[i // self.W][i % self.W] = self.forward(mult).data[0]
+        return scores
 
 
 def forward_backward(net, crit, optim, data, back=True, cuda=True):
     inputs, labels = data
     if cuda:
-        inputs, labels = inputs.cuda(), labels.cuda()
+        inputs, labels = inputs.type(torch.cuda.FloatTensor), labels.type(torch.cuda.LongTensor)
     inputs, labels = Variable(inputs), Variable(labels)
     optim.zero_grad()
     outputs = net(inputs)
@@ -107,7 +111,7 @@ def train(net, epochs, crit, optim, trainloader, testloader=None, total_err=Fals
 
 
 def train_simple(report_errs=False):
-    net = Net(2)
+    net = Net(3)
     net.zero_grad()
     net.cuda()
     tf = transforms.Compose([transforms.ToTensor()])#, transforms.Lambda(lambda x: x.cuda())])
@@ -132,8 +136,9 @@ def train_simple(report_errs=False):
     return net
 
 
-def train_uniform_noise(report_errs=True):
-    net = Net(2)
+def train_uniform_noise(report_errs=False):
+    net = Net(3)
+    net.cuda()
     net.zero_grad()
     tf = make_noisy_tf(.5)
     trainset = ImageLoader(tform=tf)

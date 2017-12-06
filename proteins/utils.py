@@ -5,8 +5,13 @@ import matplotlib.pyplot as plt
 from project_FST import fourier_lin, project_fst
 import torch
 import torch.utils.data
+from torchvision import transforms
 from os import listdir
-from PIL import Image
+from PIL import Image, ImageFile
+from sim_data import combine_two
+import re
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def generate_protein_gauss(n):
     """This simulates a protein's 3D energy potential as just a gaussian blob"""
@@ -20,7 +25,7 @@ def load_protein(filename):
 
 # Mystery is a protein I used to know, og name was EMD-2830.map
 
-def gen_dataset(proteins=["zika", "mystery"], n_each=1000, write=True, dir='dataset'):
+def gen_dataset(proteins=["zika", "mystery", "rhino"], n_each=1000, write=True, dir='dataset'):
     ims = {}
     for protein in proteins:
         rho = load_protein(protein + ".mrc")
@@ -31,13 +36,39 @@ def gen_dataset(proteins=["zika", "mystery"], n_each=1000, write=True, dir='data
         save_dict(ims, dir=dir)
     return ims
 
+
+def gen_dataset_mult(proteins=["zika", "mystery", "rhino"], n=1000, n_prots=2, write=True, dir='mult_dataset'):
+    ims_sing = gen_dataset(proteins=proteins, n_each=int(n/len(proteins)), write=True, dir='temp_prots')
+    ims = {}
+    tf = transforms.Compose([transforms.ToTensor()])#, transforms.Lambda(lambda x: x.cuda())])
+    # tf = transforms.ToTensor()
+    trainset = ImageLoader(dir='temp_prots')
+    for i in range(n):
+        ims_to_comb = []
+        names = set()
+        for _ in range(n_prots):
+            j = np.random.randint(0, n)
+            im, prot = trainset[j]
+            prot = proteins[prot]
+            ims_to_comb.append(im)
+            names.add(prot)
+        ims[re.sub(r"\W", "", str(names)) + '_' + str(i)] = combine_two(ims_to_comb[0], ims_to_comb[1], .2)
+    if write:
+        save_dict(ims, dir=dir)
+    return ims
+# def gen_randim(rhoh, n):
+#     a_comp = [np.random.randint(0, 3)]
+#     b_comp = [i for i in range(3) if i not in a_comp]
+#     a = np.random.rand(3)
+#     b = np.random.rand(3)
+#     a[a_comp] = 0
+#     b[b_comp] = 0
+#     return project_fst(a, b, n, rhoh=rhoh)
+
 def gen_randim(rhoh, n):
-    a_comp = [np.random.randint(0, 3)]
-    b_comp = [i for i in range(3) if i not in a_comp]
     a = np.random.rand(3)
     b = np.random.rand(3)
-    a[a_comp] = 0
-    b[b_comp] = 0
+    b = np.cross(a, b)
     return project_fst(a, b, n, rhoh=rhoh)
 
 
@@ -57,7 +88,7 @@ def read_dict(dir='dataset'):
 
 class ImageLoader(torch.utils.data.Dataset):
     """Credit: https://stackoverflow.com/questions/45099554/how-to-simplify-dataloader-for-autoencoder-in-pytorch"""
-    def __init__(self, prots={"zika": 0, "mystery": 1}, dir='dataset', test=False, tform=None, imgloader=Image.open):
+    def __init__(self, prots={"zika": 0, "mystery": 1, "rhino": 2}, dir='dataset', test=False, tform=None, imgloader=Image.open):
         super(ImageLoader, self).__init__()
 
         self.dir = dir
