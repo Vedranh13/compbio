@@ -196,3 +196,14 @@ def visualize_kernels(net):
     # import pdb; pdb.set_trace()
     plt.imsave("orig.png", im[0], format='png', cmap=plt.cm.gray)
     plt.imsave("ker.png", out[0][0], format='png', cmap=plt.cm.gray)
+
+
+ 
+def gen_randim_and_axis(rho, n):
+    a_comp = [np.random.randint(0, 3)]
+    b_comp = [i for i in range(3) if i not in a_comp]
+    a = np.random.rand(3)
+    b = np.random.rand(3)
+    a[a_comp] = 0
+    b[b_comp] = 0
+    return a, b, project_fst(a, b, n, rho=rho)

@@ -10,7 +10,7 @@ def project_fst(a, b, n, rho=None, rhoh=None):
     a = a / LA.norm(a)
     b = b / LA.norm(b)
     if not rhoh:
-        assert rho
+        assert rho is not None
         rhoh = fourier_lin(rho)
     data = sample_naive(rhoh, a, b, n=n)
     im = real(ifftn(ifftshift(data)))
