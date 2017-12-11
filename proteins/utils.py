@@ -119,6 +119,57 @@ class ImageLoader(torch.utils.data.Dataset):
         return out, cl
 
 
+class ImageLoaderMult(torch.utils.data.Dataset):
+    """Credit: https://stackoverflow.com/questions/45099554/how-to-simplify-dataloader-for-autoencoder-in-pytorch"""
+    def __init__(self, prots={"zika": 0, "mystery": 1, "rhino": 2}, dir='mult_dataset', test=False, tform=None, imgloader=Image.open):
+        super(ImageLoaderMult, self).__init__()
+
+        self.dir = dir
+        if test:
+            self.dir += "/test"
+        self.prots = prots
+        self.prot_combs = []
+        for prot in prots.keys():
+            for prot2 in prots.keys():
+                if prot != prot2:
+                    self.prot_combs.append(prot + prot2)
+                else:
+                    self.prot_combs.append(prot)
+        # self.prot = prot
+        self.filenames = listdir(dir)
+        for fn in self.filenames:
+            if '.png' not in fn:
+                self.filenames.remove(fn)
+        self.tform = tform
+        self.imgloader = imgloader
+
+    def __len__(self):
+        return len(self.filenames)
+
+    def __getitem__(self, i):
+        out = self.imgloader(self.dir + "/" + self.filenames[i])
+        # HOW TO RESIZE AND COMBINE SHITE http://scipy-cookbook.readthedocs.io/items/Matplotlib_AdjustingImageSize.html
+        # out.resize((124,100,4))
+        # RESIZED using: http://matplotlib.org/users/image_tutorial.html
+        out.thumbnail((2 * 124, 2 * 124, 4), Image.ANTIALIAS)
+        prot = self.filenames[i].split("_")[0]
+        cl =  self.prot_combs.index(prot)
+        # for i, a in enumerate(self.prots.keys()):
+        #     for j, b in enumerate(self.prots.keys()):
+        #         prot_test = a + b
+        #         # prot_test2 = prots[j] + prots[i]
+        #         if i == j:
+        #             prot_test = a
+        #         if prot == prot_test: # or prot == prot_test2:
+        #             cl[i * len(self.prots) + j] = 1
+        #         else:
+        #             cl[i * len(self.prots) + j] = 0
+        # assert np.count_nonzero(cl) == 1
+        if self.tform:
+            out = self.tform(out)
+        return out, cl
+
+
 def enlarge_nd(arr, new_shape):
     new = arr.reshape(new_shape)
 
