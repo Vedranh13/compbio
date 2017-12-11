@@ -33,3 +33,7 @@ def make_noisy_tf(spread=1, noise='uniform'):
     elif noise == 'gauss' or 'gaussian':
         noi = Lambda(add_gauss(sig=spread))
     return Compose([ToTensor(), noi])
+
+
+def calc_var(im):
+    return torch.var(im)
