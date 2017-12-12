@@ -200,10 +200,27 @@ def visualize_kernels(net):
 
  
 def gen_randim_and_axis(rho, n):
-    a_comp = [np.random.randint(0, 3)]
-    b_comp = [i for i in range(3) if i not in a_comp]
-    a = np.random.rand(3)
-    b = np.random.rand(3)
-    a[a_comp] = 0
-    b[b_comp] = 0
+    a, b = get_orthonorm_basis(3)
     return a, b, project_fst(a, b, n, rho=rho)
+
+#gets two orthonormal basis vectors with a given number of dimensions. I guess they're not really
+#a basis for anything in particular, but they certainly span a subspace...?
+def get_orthonorm_basis(dims):
+    a = np.random.rand(dims)
+    a = a/np.linalg.norm(a)
+    b = np.random.rand(dims)
+    # graham-schmidt process
+    b = b/np.linalg.norm(b)
+    while(np.allclose(a,b)):
+        b = np.random.rand(dims)
+        b = b/np.linalg.norm(b)
+    
+    #now we know they're "distinct" directions
+    proj_b_onto_a = np.dot(a,b) * a #no need to divide by a.a because a.a=1 (we already normed)
+    b = b - proj_b_onto_a
+
+    b = b/np.linalg.norm(b) 
+
+    #a, b orthonormal now.
+    return a, b
+    

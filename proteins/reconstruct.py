@@ -58,13 +58,14 @@ def smear_to_common_coords(smeared, av, bv, cv):
 
     count = -64
     c_time = t()
+    mat = np.stack([cv,av,bv])
     #as stated above, coords are in x-y-z space. This function converts the coords to a-b-c space
     #and returns the value from the smeared image by using the grid interpolator.
     def f(*coords):
         x = np.array(coords)
         nonlocal count, c_time
         #x = coords
-        temp_v = coords[2]
+        temp_v = coords[1]
         if temp_v != count:
             count = temp_v
             temp_t = t()
@@ -75,10 +76,10 @@ def smear_to_common_coords(smeared, av, bv, cv):
         #print(a.shape)
         #print(b.shape)
         #print(c.shape)
-        return reg((np.dot(x,cv), np.dot(x,av), np.dot(x,bv)))
+        return reg(np.dot(mat,x))
     f = np.vectorize(f)
     #arr = np.zeros(n,n,n)
-    xv, yv, zv = np.meshgrid(a,a,a)
+    xv, yv, zv = np.meshgrid(a,a,a, indexing='ij')
     #for i in len(a):
     #    for j in len(a):
     #        for k in len(a):
